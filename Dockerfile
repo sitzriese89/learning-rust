@@ -20,6 +20,7 @@ RUN apt-get update && \
     clang \
     llvm \
     git \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------
@@ -54,6 +55,7 @@ RUN apt-get update && \
     libssl3 \
     clang \
     llvm \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------
