@@ -14,6 +14,7 @@ FROM rust:1.92-slim AS builder
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
+    lld \
     libssl-dev \
     pkg-config \
     clang \
@@ -49,6 +50,7 @@ ENV PATH="/usr/local/cargo/bin:${PATH}"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
+    lld \
     libssl3 \
     clang \
     llvm \
