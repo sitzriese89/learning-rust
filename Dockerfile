@@ -21,6 +21,7 @@ RUN apt-get update && \
     llvm \
     git \
     sudo \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------
@@ -56,6 +57,7 @@ RUN apt-get update && \
     clang \
     llvm \
     sudo \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------
