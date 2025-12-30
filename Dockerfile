@@ -31,7 +31,8 @@ RUN apt-get update && \
 #   Using `--locked` guarantees reproducible builds of the tools.
 # ------------------------------------------------------------
 RUN cargo install --locked cargo-audit && \
-    cargo install --locked cargo-tarpaulin
+    cargo install --locked cargo-tarpaulin && \
+    rustup component add clippy
 
 # ------------------------------------------------------------
 # 4️⃣  Final lightweight image (optional)
