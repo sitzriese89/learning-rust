@@ -10,6 +10,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cargo install tarpaulin
+      run: cargo install cargo-tarpaulin
+    - name: Cargo install audit
+      run: cargo install cargo-audit
+
   build:
 
     runs-on: ubuntu-latest
