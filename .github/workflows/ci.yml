@@ -2,41 +2,34 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Cargo install tarpaulin
-      run: cargo install cargo-tarpaulin
-    - name: Cargo install audit
-      run: cargo install cargo-audit
-
   build:
+    container:
+      image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
+      credentials:
+        username: ${{ secrets.CR_USER }}
+        password: ${{ secrets.CR_TOKEN }}
     needs: setup
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Code Coverage
-      run: cargo tarpaulin --ignore-tests
-    - name: Linting
-      run: cargo clippy -- -D warnings
-    - name: Format
-      run: cargo fmt -- --check
-    - name: Vulnerabilities
-      run: cargo audit
-
-      
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Code Coverage
+        run: cargo tarpaulin --ignore-tests
+      - name: Linting
+        run: cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt -- --check
+      - name: Vulnerabilities
+        run: cargo audit
