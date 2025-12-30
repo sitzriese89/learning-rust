@@ -10,39 +10,39 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  checks:
     container:
       image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
       credentials:
         username: ${{ secrets.CR_USER }}
         password: ${{ secrets.CR_TOKEN }}
       options: --privileged
-      
+
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check kernel knobs
         run: |
           cat /proc/sys/kernel/randomize_va_space
           cat /proc/sys/kernel/yama/ptrace_scope
-          
+
       - name: Build
         run: cargo build --verbose
-        
+
       - name: Run tests
         run: cargo test --verbose
-        
+
       - name: Code Coverage
-        run: |  
+        run: |
           sudo sysctl -w kernel.randomize_va_space=0
           sudo sysctl -w kernel.yama.ptrace_scope=0
           cargo tarpaulin --ignore-tests
-        
+
       - name: Linting
         run: cargo clippy -- -D warnings
-        
+
       - name: Format
         run: cargo fmt -- --check
       - name: Vulnerabilities

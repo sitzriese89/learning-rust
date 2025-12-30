@@ -31,37 +31,8 @@ RUN apt-get update && \
 #   Using `--locked` guarantees reproducible builds of the tools.
 # ------------------------------------------------------------
 RUN cargo install --locked cargo-audit && \
-    cargo install --locked cargo-tarpaulin && \
-    rustup component add clippy
+    cargo install --locked cargo-tarpaulin
 
-# ------------------------------------------------------------
-# 4️⃣  Final lightweight image (optional)
-# ------------------------------------------------------------
-#    We could copy only the binaries into a smaller runtime image,
-#    but keeping the full Rust toolchain makes it easy to compile
-#    your own project inside the same container.
-# ------------------------------------------------------------
-FROM rust:1.92-slim
+RUN rustup component add clippy
 
-# Copy the Cargo binaries from the builder stage
-COPY --from=builder /usr/local/cargo/bin /usr/local/cargo/bin
-
-# Ensure the binary directory is on PATH (it already is, but be explicit)
-ENV PATH="/usr/local/cargo/bin:${PATH}"
-
-# Install the same OS libs that the builder needed (runtime deps only)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    lld \
-    libssl3 \
-    clang \
-    llvm \
-    sudo \
-    procps \
-    && rm -rf /var/lib/apt/lists/*
-
-# ----------------------------------------------------------------
-# 5️⃣  Default command – a helpful hint for users of the image
-# ----------------------------------------------------------------
-CMD ["bash"]
+RUN rustup component add rustfmt
