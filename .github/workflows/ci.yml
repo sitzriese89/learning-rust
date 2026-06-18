@@ -23,10 +23,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache dependencies
+        uses: swatinem/rust-cargo/cache@v2
+
       - name: Check kernel knobs
         run: |
           cat /proc/sys/kernel/randomize_va_space
           cat /proc/sys/kernel/yama/ptrace_scope
+
+      # --- FAST CHECKS (Fail Fast) ---
+
+      - name: Format
+        run: cargo fmt -- --check
+
+      - name: Linting
+        run: cargo clippy -- -D warnings
+
+      - name: Vulnerabilities
+        run: cargo audit
+
+      # --- HEAVY CHECKS ---
 
       - name: Build
         run: cargo build --verbose
@@ -39,11 +55,3 @@ jobs:
           sudo sysctl -w kernel.randomize_va_space=0
           sudo sysctl -w kernel.yama.ptrace_scope=0
           cargo tarpaulin --ignore-tests
-
-      - name: Linting
-        run: cargo clippy -- -D warnings
-
-      - name: Format
-        run: cargo fmt -- --check
-      - name: Vulnerabilities
-        run: cargo audit

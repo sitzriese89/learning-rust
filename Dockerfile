@@ -1,7 +1,7 @@
 # ------------------------------------------------------------
 # 1️⃣  Base image – official Rust toolchain (stable)
 # ------------------------------------------------------------
-FROM rust:1.92-slim AS builder
+FROM rust:1.92-slim
 
 # ------------------------------------------------------------
 # 2️⃣  Install OS‑level dependencies
@@ -25,14 +25,8 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------
-# 3️⃣  Install the extra Cargo tools globally
+# 3️⃣  Install extra Cargo tools and Rust components
 # ------------------------------------------------------------
-#   They end up in $HOME/.cargo/bin which we add to PATH later.
-#   Using `--locked` guarantees reproducible builds of the tools.
-# ------------------------------------------------------------
-RUN cargo install --locked cargo-audit && \
-    cargo install --locked cargo-tarpaulin
-
-RUN rustup component add clippy
-
-RUN rustup component add rustfmt
+# Combining these reduces the number of image layers.
+RUN cargo install --locked cargo-audit cargo-tarpaulin && \
+    rustup component add clippy rustfmt
