@@ -1,9 +1,15 @@
 # ==========================================
-# STAGE 1: Builder
+# Optimized CI Environment Image
 # ==========================================
-FROM rust:1.92-slim AS builder
+FROM rust:1.92-slim
 
-# Install build dependencies
+# 1. Set environment variables to speed up Rust builds in CI
+ENV CARGO_INCREMENTAL=0 \
+    CARGO_REGISTRY_SCHEMAS=1 \
+    RUST_BACKTRACE=1
+
+# 2. Install all system dependencies in a single layer to reduce image size
+# We combine everything needed for building, linting, and coverage (tarpaulin)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -16,38 +22,13 @@ RUN apt-get update && \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# Install cargo tools
-RUN cargo install --locked cargo-audit cargo-tarpaulin
+# 3. Install Rust components and cargo tools in a single layer
+# Adding them together prevents creating multiple heavy intermediate layers
+RUN rustup component add clippy rustfmt && \
+    cargo install --locked cargo-audit cargo-tarpaulin
 
-# Add rustup components
-RUN rustup component add clippy rustfmt
-
-# ==========================================
-# STAGE 2: Final Runtime Image
-# ==========================================
-FROM rust:1.92-slim
-
-# 1. Install only the necessary runtime dependencies
-# (Retaining clang/llvm for tarpaulin's instrumentation)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    libssl-dev \
-    pkg-config \
-    clang \
-    llvm \
-    git \
-    procps \
-    && rm -rf /var/lib/apt/lists/*
-
-# 2. Copy the compiled binaries from the builder stage
-COPY --from=builder /usr/local/cargo/bin /usr/local/cargo/bin
-
-# 3. Add rustup components to the final image
-RUN rustup component add clippy rustfmt
-
-# Set the working directory for CI tasks
+# 4. Set the working directory for CI tasks
 WORKDIR /app
 
-# Default command
+# Default command to verify environment integrity
 CMD ["cargo", "--version"]
