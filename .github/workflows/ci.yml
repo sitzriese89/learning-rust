@@ -10,58 +10,72 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  checks:
+  # --- FAST CHECKS (Parallelizable) ---
+  lint:
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
       credentials:
         username: ${{ secrets.CR_USER }}
         password: ${{ secrets.CR_TOKEN }}
       options: --privileged
-
-    runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Check kernel knobs
-        run: |
-          cat /proc/sys/kernel/randomize_va_space
-          cat /proc/sys/kernel/yama/ptrace_scope
-
-      # --- FAST CHECKS (Fail Fast) ---
-
+      - uses: swatinem/rust-cache@v2
       - name: Format
         run: cargo fmt -- --check
-
       - name: Linting
         run: cargo clippy -- -D warnings
 
+  audit:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
+      credentials:
+        username: ${{ secrets.CR_USER }}
+        password: ${{ secrets.CR_TOKEN }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swatinem/rust-cache@v2
       - name: Vulnerabilities
         run: cargo audit
 
-      # --- HEAVY CHECKS ---
-
-      - name: Build
-        run: cargo build --verbose
-
+  # --- HEAVY CHECKS ---
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
+      credentials:
+        username: ${{ secrets.CR_USER }}
+        password: ${{ secrets.CR_TOKEN }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swatinem/rust-cache@v2
       - name: Run tests
         run: cargo test --verbose
 
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sitzriese89/rust-with-ci-dep:latest
+      credentials:
+        username: ${{ secrets.CR_USER }}
+        password: ${{ secrets.CR_TOKEN }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swatinem/rust-cache@v2
       - name: Code Coverage
         run: |
           sudo sysctl -w kernel.randomize_va_space=0
           sudo sysctl -w kernel.yama.ptrace_scope=0
+          # Note: verify if '--ignore-tests' is indeed the intended behavior for your coverage needs
           cargo tarpaulin --ignore-tests
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
